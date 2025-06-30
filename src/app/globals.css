@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+.bg-light-blue-tone {
+  background-color: #7dd3fc;
+}
+.bg-blue-tone-450 {
+  background-color: #375DFB;
+}
+.bg-yellow {
+  background-color: #F3A218;
+}
+.bg-red-tone-400 {
+  background-color: #F56630;
+}
+.bg-green-tone-700 {
+  background-color: #0F973D;
+}
+
+@media screen and (max-width: 768px) {
+  .container {
+    padding-right: 1rem !important;
+    padding-left: 1rem !important;
+  }
+}
+
+
+@layer utilities {
+  .animate {
+    @apply duration-200 ease-in-out transition-all
+  }
+}
+
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+  }
+}
