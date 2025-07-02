@@ -5,5 +5,16 @@ export interface ProductDto {
   name: string
   value: string
   color: string
+  unit: string
   status: ProductStatus
 }
+
+export interface CreateProductDto {
+  name: string
+  value: string
+  color: string
+  unit: string
+  status: ProductStatus
+}
+
+export interface UpdateProductDto extends Partial<CreateProductDto> { }
