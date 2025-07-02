@@ -63,7 +63,7 @@ const ColorInput: React.FC<ColorInputProps> = ({
   return (
     <div className='w-full'>
       {label && (
-        <Label htmlFor={name} className='mb-2'>
+        <Label name={name} classNames='mb-2'>
           {label}
         </Label>
       )}
