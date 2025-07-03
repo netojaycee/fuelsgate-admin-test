@@ -43,7 +43,7 @@ export const menuItems = [
   {
     label: "Trucks",
     href: "/trucks",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     label: "Orders",
