@@ -258,7 +258,7 @@ const PlatformConfig = () => {
                 }}
                 className='max-w-[320px] h-10'
                 name='search'
-                icon={<Search className='h-4 w-4' />}
+                // leftIcon={<Search className='h-4 w-4' />}
               />
             </div>
             <Button onClick={() => setIsCreateModalOpen(true)}>
@@ -282,8 +282,6 @@ const PlatformConfig = () => {
           <CustomPagination
             handleNextPage={handleNextPage}
             handlePreviousPage={handlePreviousPage}
-            currentPage={page}
-            totalPages={Math.ceil((configsData?.total || 0) / limit)}
           />
         </TabsContent>
 
@@ -363,7 +361,13 @@ const PlatformConfig = () => {
           </DialogHeader>
           <PlatformConfigForm
             initialData={selectedConfig || undefined}
-            onSubmit={isEditModalOpen ? handleUpdateConfig : handleCreateConfig}
+            onSubmit={(data) => {
+              if (isEditModalOpen) {
+                handleUpdateConfig(data as UpdatePlatformConfigDto);
+              } else {
+                handleCreateConfig(data as CreatePlatformConfigDto);
+              }
+            }}
             onCancel={() => {
               setIsCreateModalOpen(false);
               setIsEditModalOpen(false);
