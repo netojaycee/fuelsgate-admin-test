@@ -73,4 +73,9 @@ export const menuItems = [
     label: "Pricing",
     href: "/pricing",
   },
+  {
+    label: "Platform Config",
+    href: "/platform-config",
+    comingSoon: false,
+  },
 ];
