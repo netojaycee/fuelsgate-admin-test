@@ -57,7 +57,10 @@ const ServiceFeesForm: React.FC<ServiceFeesFormProps> = ({
   }, [initialData, reset]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className='space-y-4 max-h-[70vh] overflow-y-auto'
+    >
       <div className='space-y-2'>
         <label className='text-sm font-medium text-gray-700'>
           Transporter Service Fee (%)

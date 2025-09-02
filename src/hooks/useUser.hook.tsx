@@ -5,13 +5,14 @@ import {
   fetchUserByIdRequest,
   updateUserProfileRequest,
   updateUserPasswordRequest,
+  deleteUserRequest,
+  fetchUsersByEmailRequest,
 } from "@/services/user.service";
-import { useToast } from "@/components/ui/use-toast";
 import useToastConfig from "./useToastConfig.hook";
 
 const useUserHook = () => {
-    const { showToast } = useToastConfig();
-    const queryClient = useQueryClient();
+  const { showToast } = useToastConfig();
+  const queryClient = useQueryClient();
 
   const useFetchUsers = (queryParams: string = "") =>
     useQuery({
@@ -43,14 +44,11 @@ const useUserHook = () => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["USERS"] });
-        
+
         showToast("User status updated successfully", "success");
       },
       onError: (error: any) => {
-        showToast(
-          error?.message || "Failed to update user status",
-          "error"
-        );
+        showToast(error?.message || "Failed to update user status", "error");
       },
     });
 
@@ -64,10 +62,7 @@ const useUserHook = () => {
         showToast("Profile updated successfully", "success");
       },
       onError: (error: any) => {
-        showToast(
-          error?.message || "Failed to update profile",
-          "error"
-        );
+        showToast(error?.message || "Failed to update profile", "error");
       },
     });
 
@@ -80,14 +75,32 @@ const useUserHook = () => {
         showToast("Password updated successfully", "success");
       },
       onError: (error: any) => {
-        showToast(
-          error?.message || "Failed to update password",
-          "error"
-        );
+        showToast(error?.message || "Failed to update password", "error");
       },
     });
 
-  
+  const useDeleteUser = () =>
+    useMutation({
+      mutationFn: async (userId: string) => {
+        return await deleteUserRequest(userId);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["USERS"] });
+        showToast("User deleted successfully", "success");
+      },
+      onError: (error: any) => {
+        showToast(error?.message || "Failed to delete user", "error");
+      },
+    });
+
+  const useFetchUsersByEmail = (emails: string[]) =>
+    useQuery({
+      queryFn: async () => {
+        return await fetchUsersByEmailRequest(emails);
+      },
+      queryKey: ["USERS_BY_EMAIL", emails],
+      enabled: emails.length > 0,
+    });
 
   return {
     useFetchUsers,
@@ -95,6 +108,8 @@ const useUserHook = () => {
     useUpdateUserStatus,
     useUpdateUserProfile,
     useUpdateUserPassword,
+    useDeleteUser,
+    useFetchUsersByEmail,
   };
 };
 

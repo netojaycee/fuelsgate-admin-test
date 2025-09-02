@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { Plus } from "lucide-react";
 import CustomInput from "@/components/atoms/custom-input";
 import { CustomSelect } from "@/components/atoms/custom-select";
 import { Text } from "@/components/atoms/text";
@@ -34,8 +35,6 @@ import {
   Edit,
   Trash2,
   Copy,
-  Loader2,
-  Plus,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { TruckDto, CreateTruckDto, UpdateTruckDto } from "@/types/truck.type";
@@ -47,6 +46,7 @@ import useDepotHubHook from "@/hooks/useDepotHub.hook";
 import TruckForm from "@/components/features/trucks/truck-form";
 import TruckViewDrawer from "@/components/features/trucks/truck-view-drawer";
 import { formatDate } from "@/utils/formatDate";
+import { CustomProductOptionWrapper, CustomValueContainerWrapper } from "@/components/common/product-select-components";
 
 const Trucks = () => {
   const { toast } = useToast();
@@ -69,10 +69,8 @@ const Trucks = () => {
     const params = new URLSearchParams();
 
     if (searchTerm) params.append("search", searchTerm);
-    if (selectedProduct.length > 0)
-      params.append("productId", selectedProduct.join(","));
-    if (selectedDepot.length > 0)
-      params.append("depotHubId", selectedDepot.join(","));
+    if (selectedProduct.length > 0) params.append("productId", selectedProduct.join(","));
+    if (selectedDepot.length > 0) params.append("depotHubId", selectedDepot.join(","));
 
     // Status based on tab
     if (activeTab === "active") {
@@ -103,15 +101,6 @@ const Trucks = () => {
   const updateTruckStatusMutation = useUpdateTruckStatus();
   const deleteTruckMutation = useDeleteTruck();
 
-  console.log(data, "trucka");
-  console.log("Pagination Debug:", {
-    currentPage: page,
-    total: data?.data?.total,
-    limit,
-    totalPages: Math.ceil((data?.data?.total || 0) / limit),
-    hasNext: page < Math.ceil((data?.data?.total || 0) / limit),
-    hasPrev: page > 1,
-  });
 
   // Fetch products and depots for filters
   const { useFetchProducts } = useProductHook();
@@ -123,7 +112,7 @@ const Trucks = () => {
       value: product._id,
     }));
   }, [productsData]);
-
+  
   const { useFetchDepotHubs } = useDepotHubHook();
   const { data: depotsData, isLoading: loadingDepots } = useFetchDepotHubs();
   const depotOptions = useMemo(() => {
@@ -135,8 +124,8 @@ const Trucks = () => {
   }, [depotsData]);
   console.log(depotsData, "GGg", data);
 
-  const getStatusBadge = (status: TruckDto["status"]) => {
-    const styles: Record<TruckDto["status"], string> = {
+  const getStatusBadge = (status: TruckDto['status']) => {
+    const styles: Record<TruckDto['status'], string> = {
       available: "bg-green-100 text-green-800",
       locked: "bg-gray-100 text-gray-800",
       pending: "bg-yellow-100 text-yellow-800",
@@ -196,9 +185,7 @@ const Trucks = () => {
 
       toast({
         title: "Success",
-        description: `Truck ${
-          newStatus === "available" ? "activated" : "locked"
-        } successfully`,
+        description: `Truck ${newStatus === "available" ? "activated" : "locked"} successfully`,
       });
     } catch (error) {
       toast({
@@ -209,9 +196,7 @@ const Trucks = () => {
     }
   };
 
-  const handleCreateTruck = async (
-    truckData: CreateTruckDto | UpdateTruckDto
-  ) => {
+  const handleCreateTruck = async (truckData: CreateTruckDto | UpdateTruckDto) => {
     try {
       await createTruckMutation.mutateAsync(truckData as CreateTruckDto);
       toast({
@@ -228,9 +213,7 @@ const Trucks = () => {
     }
   };
 
-  const handleUpdateTruck = async (
-    truckData: CreateTruckDto | UpdateTruckDto
-  ) => {
+  const handleUpdateTruck = async (truckData: CreateTruckDto | UpdateTruckDto) => {
     if (!selectedTruck?._id) return;
 
     try {
@@ -275,8 +258,7 @@ const Trucks = () => {
 
   const handleNextPage = () => {
     const nextPage = page + 1;
-    const totalPages = Math.ceil((data?.data?.total || 0) / limit);
-    if (nextPage <= totalPages) {
+    if (nextPage <= Math.ceil((data?.total || 0) / limit)) {
       setPage(nextPage);
     }
   };
@@ -298,26 +280,6 @@ const Trucks = () => {
       ),
     },
     {
-      header: "Owner",
-      accessorKey: "profileId.companyName",
-      cell: ({ row }: { row: any }) => (
-        <Text variant='ps' classNames='text-black'>
-          {row.original.truckOwner ||
-            row.original.profileId?.companyName ||
-            "-"}
-        </Text>
-      ),
-    },
-    {
-      header: "Profile Type",
-      accessorKey: "profileType",
-      cell: ({ row }: { row: any }) => (
-        <Text variant='ps' classNames='text-black'>
-          {row.original.profileType || "-"}
-        </Text>
-      ),
-    },
-    {
       header: "Product",
       accessorKey: "productId",
       cell: ({ row }: { row: any }) => (
@@ -326,46 +288,28 @@ const Trucks = () => {
         </Text>
       ),
     },
-    // {
-    //   header: "Depot",
-    //   accessorKey: "depot",
-    //   cell: ({ row }: { row: any }) => (
-    //     <Text variant='ps' classNames='text-black'>
-    //       {row.original.depot}
-    //     </Text>
-    //   ),
-    // },
+    {
+      header: "Depot",
+      accessorKey: "depot",
+      cell: ({ row }: { row: any }) => (
+        <Text variant='ps' classNames='text-black'>
+          {row.original.depot}
+        </Text>
+      ),
+    },
     {
       header: "Status",
       accessorKey: "status",
       cell: ({ row }: { row: any }) => getStatusBadge(row.original.status),
     },
-    // {
-    //   header: "Load Status",
-    //   accessorKey: "loadStatus",
-    //   cell: ({ row }: { row: any }) => (
-    //     <Text variant='ps' classNames='text-black'>
-    //       {row.original.loadStatus}
-    //     </Text>
-    //   ),
-    // },
     {
       header: "Capacity",
       accessorKey: "capacity",
-      cell: ({ row }: { row: any }) => {
-      const value = row.original.capacity;
-      const formatted =
-        value >= 1_000_000
-          ? `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}M`
-          : value >= 1_000
-          ? `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}k`
-          : value.toLocaleString();
-      return (
+      cell: ({ row }: { row: any }) => (
         <Text variant='ps' classNames='text-black'>
-        {formatted} Ltr
+          {row.original.capacity.toLocaleString()} Litres
         </Text>
-      );
-      },
+      ),
     },
     {
       header: "Registration Date",
@@ -381,54 +325,34 @@ const Trucks = () => {
       accessorKey: "actions",
       cell: ({ row }: { row: any }) => {
         const truck = row.original as TruckDto;
+
         return (
           <div className='flex items-center gap-2'>
             <Button
               size='sm'
               variant='ghost'
               onClick={() => handleViewTruck(truck)}
-              disabled={
-                updateTruckMutation.isPending || createTruckMutation.isPending
-              }
             >
-              {(updateTruckMutation.isPending ||
-                createTruckMutation.isPending) &&
-              selectedTruck?._id === truck._id ? (
-                <span className='animate-spin mr-2 w-4 h-4 border-2 border-t-2 border-gray-400 rounded-full'></span>
-              ) : null}
               View
             </Button>
             <Button
               size='sm'
               variant='ghost'
               onClick={() => handleEditTruck(truck)}
-              disabled={updateTruckMutation.isPending}
             >
-              {updateTruckMutation.isPending &&
-              selectedTruck?._id === truck._id ? (
-                <span className='animate-spin mr-2 w-4 h-4 border-2 border-t-2 border-gray-400 rounded-full'></span>
-              ) : (
-                <Edit className='w-4 h-4' />
-              )}
+              <Edit className='w-4 h-4' />
             </Button>
             <Button
               size='sm'
               variant='ghost'
               onClick={() => handleDeleteTruck(truck)}
-              disabled={deleteTruckMutation.isPending}
             >
-              {deleteTruckMutation.isPending &&
-              selectedTruck?._id === truck._id ? (
-                <span className='animate-spin mr-2 w-4 h-4 border-2 border-t-2 border-gray-400 rounded-full'></span>
-              ) : (
-                <Trash2 className='w-4 h-4' />
-              )}
+              <Trash2 className='w-4 h-4' />
             </Button>
             <Button
               size='sm'
               variant='ghost'
               onClick={() => handleCopyTruckInfo(truck)}
-              disabled={createTruckMutation.isPending}
             >
               <Copy className='w-4 h-4' />
             </Button>
@@ -436,18 +360,9 @@ const Trucks = () => {
               <Button
                 size='sm'
                 className='flex items-center gap-1'
-                onClick={() => {
-                  setSelectedTruck(truck);
-                  handleToggleStatus(truck);
-                }}
-                // disabled={updateTruckStatusMutation.isPending}
+                onClick={() => handleToggleStatus(truck)}
               >
-                {updateTruckStatusMutation.isPending &&
-                selectedTruck?._id === truck._id ? (
-                  <Loader2 className='animate-spin mr-2 w-4 h-4' />
-                ) : (
-                  <CheckCircle className='w-4 h-4' />
-                )}
+                <CheckCircle className='w-4 h-4' />
                 Activate
               </Button>
             ) : (
@@ -455,16 +370,9 @@ const Trucks = () => {
                 size='sm'
                 variant='outline'
                 className='flex items-center gap-1'
-                onClick={() => {
-                  setSelectedTruck(truck);
-                  handleToggleStatus(truck);
-                }}
-                // disabled={updateTruckStatusMutation.isPending}
+                onClick={() => handleToggleStatus(truck)}
               >
-                {updateTruckStatusMutation.isPending &&
-                selectedTruck?._id === truck._id ? (
-                  <Loader2 className='animate-spin mr-2 w-4 h-4' />
-                ) : truck.status === "available" ? (
+                {truck.status === "available" ? (
                   <XCircle className='w-4 h-4' />
                 ) : (
                   <CheckCircle className='w-4 h-4' />
@@ -495,10 +403,10 @@ const Trucks = () => {
             Manage truck registrations and approvals
           </Text>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
+        {/* <Button onClick={() => setIsCreateModalOpen(true)}>
           <Plus className='w-4 h-4 mr-2' />
           Add Truck
-        </Button>
+        </Button> */}
       </div>
 
       <Tabs
@@ -538,6 +446,15 @@ const Trucks = () => {
             />
           </div>
           <div className='flex items-center gap-4'>
+            {/* <CustomSelect
+              name='productId'
+              label='Select product'
+              options={products}
+              value={selectedProduct}
+              onChange={handleProductsChange}
+              error={errors.productId?.message}
+              isDisabled={loadingProducts}
+            /> */}
             <CustomSelect
               name='product'
               options={productOptions}
@@ -548,8 +465,8 @@ const Trucks = () => {
                   )
                   .filter(Boolean) as any
               }
-              // Option={CustomProductOptionWrapper}
-              // ValueContainer={CustomValueContainerWrapper}
+              Option={CustomProductOptionWrapper}
+              ValueContainer={CustomValueContainerWrapper}
               onChange={(selected: any) => {
                 if (Array.isArray(selected)) {
                   setSelectedProduct(selected.map((item: any) => item.value));
@@ -617,10 +534,6 @@ const Trucks = () => {
       <CustomPagination
         handleNextPage={handleNextPage}
         handlePreviousPage={handlePreviousPage}
-        currentPage={page}
-        totalPages={Math.ceil((data?.data?.total || 0) / limit)}
-        hasNextPage={page < Math.ceil((data?.data?.total || 0) / limit)}
-        hasPreviousPage={page > 1}
       />
 
       {/* Create/Edit Truck Modal */}
@@ -658,8 +571,6 @@ const Trucks = () => {
       {/* View Truck Details */}
       <TruckViewDrawer
         truck={selectedTruck}
-        ownerDetails={selectedTruck?.profileId}
-        profileType={selectedTruck?.profileType}
         isOpen={viewDrawerOpen}
         onClose={() => {
           setViewDrawerOpen(false);

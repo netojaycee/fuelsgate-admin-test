@@ -1,0 +1,1 @@
+on the backend set endpoint that fetch user by email and in create truck if role is admin then save the truck owner and owner logo too...then on frontend if truck owner and logo use it else use origin company name and logo

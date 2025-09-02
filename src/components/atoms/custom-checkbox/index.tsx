@@ -1,22 +1,35 @@
-'use client'
-import React from 'react'
-import clsx from 'clsx'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '../label'
+"use client";
+import React from "react";
+import clsx from "clsx";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "../label";
 
 export type TCustomCheckbox = {
-  name: string, 
-  label?: string,
-  classNames?: string
-}
+  name: string;
+  label?: string;
+  classNames?: string;
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+};
 
-const CustomCheckbox = ({ name, label, classNames }: TCustomCheckbox) => {
+const CustomCheckbox = ({
+  name,
+  label,
+  classNames,
+  checked,
+  onCheckedChange,
+}: TCustomCheckbox) => {
   return (
     <div className={clsx("flex items-center space-x-2", classNames)}>
-      <Checkbox id={name} className='h-5 w-5 rounded-[4px] border-mid-gray-450' />
+      <Checkbox
+        id={name}
+        className='h-5 w-5 rounded-[4px] border-mid-gray-450'
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+      />
       {label && <Label name={name} label={label} />}
     </div>
-  )
-}
+  );
+};
 
-export default CustomCheckbox
+export default CustomCheckbox;

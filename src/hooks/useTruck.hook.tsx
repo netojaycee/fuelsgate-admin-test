@@ -38,7 +38,7 @@ const useTruckHook = () => {
       },
       onSuccess: (response) => {
         showToast(response.message, "success");
-        queryClient.invalidateQueries({ queryKey: ["TRUCKS"] });
+        queryClient.invalidateQueries({ queryKey: ["TRUCKS"], exact: false });
       },
       onError: (response) => {
         showToast(response.message, "error");
@@ -58,7 +58,7 @@ const useTruckHook = () => {
       },
       onSuccess: (response) => {
         showToast(response.message, "success");
-        queryClient.invalidateQueries({ queryKey: ["TRUCKS"] });
+        queryClient.invalidateQueries({ queryKey: ["TRUCKS"], exact: false });
       },
       onError: (response) => {
         showToast(response.message, "error");
@@ -78,7 +78,7 @@ const useTruckHook = () => {
       },
       onSuccess: (response) => {
         showToast(response.message, "success");
-        queryClient.invalidateQueries({ queryKey: ["TRUCKS"] });
+        queryClient.invalidateQueries({ queryKey: ["TRUCKS"], exact: false });
       },
       onError: (response) => {
         showToast(response.message, "error");
@@ -92,7 +92,7 @@ const useTruckHook = () => {
       },
       onSuccess: (response) => {
         showToast(response.message, "success");
-        queryClient.invalidateQueries({ queryKey: ["TRUCKS"] });
+        queryClient.invalidateQueries({ queryKey: ["TRUCKS"], exact: false });
       },
       onError: (response) => {
         showToast(response.message, "error");

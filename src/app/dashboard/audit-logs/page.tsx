@@ -84,7 +84,13 @@ const AuditLogs = () => {
   ]);
 
   const { data: logsData, isLoading } = useFetchAuditLogs(queryParams);
-  const logs = logsData?.data?.logs || [];
+
+  console.log(logsData, "logsData");
+  // const logs = logsData?.data?.logs || [];
+  const logs =
+    logsData?.data?.logs?.filter(
+      (log: AuditLog) => !["LOGIN", "REGISTER", "LOGOUT"].includes(log.action)
+    ) || [];
   const totalPages = logsData?.data?.totalPages || 1;
   const hasNext = logsData?.data?.hasNext || false;
   const hasPrev = logsData?.data?.hasPrev || false;
@@ -373,7 +379,7 @@ const AuditLogs = () => {
               }}
             /> */}
           </div>
-{/* 
+          {/* 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <CustomSelect
               name='status'

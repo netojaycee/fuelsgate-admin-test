@@ -1,7 +1,7 @@
 import { requestHandler } from "@/utils/requestHandler"
 
-export const fetchOrdersRequest = async (query: string, pageParam: number) => {
-  const url = '/order' + (query ?? '') + pageParam
+export const fetchOrdersRequest = async (query: string) => {
+  const url = '/order' + (query ?? '')
   return await requestHandler('get', url)
 }
 
@@ -29,3 +29,8 @@ export const getOrderDetailsRequest = async (id: string) => {
   const url = `/order/${id}`;
   return await requestHandler('get', url)
 }
+
+export const deleteOrderRequest = async (orderId: string) => {
+  const url = `/order/${orderId}`;
+  return await requestHandler('delete', url);
+};

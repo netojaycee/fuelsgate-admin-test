@@ -71,7 +71,10 @@ const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-4'>
+    <form
+      onSubmit={handleSubmit(handleFormSubmit)}
+      className='space-y-4 max-h-[70vh] overflow-y-auto'
+    >
       <div className='space-y-2'>
         <label className='text-sm font-medium text-gray-700'>
           Configuration Key

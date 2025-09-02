@@ -23,7 +23,7 @@ export const updateTruckRequest = async (truckId: string, truckData: UpdateTruck
 
 export const updateTruckStatusRequest = async (truckId: string, status: string) => {
     const url = `/truck/${truckId}/status`;
-    return await requestHandler("patch", url, { status });
+    return await requestHandler("put", url, { status });
 };
 
 export const deleteTruckRequest = async (truckId: string) => {

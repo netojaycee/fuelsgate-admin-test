@@ -47,17 +47,17 @@ export const menuItems = [
   },
   {
     label: "Orders",
-    comingSoon: true,
+    comingSoon: false,
     SubMenu: [
       {
         label: "Product Orders",
         href: "/product-orders",
-        comingSoon: true,
+        comingSoon: false,
       },
       {
         label: "Truck Orders",
         href: "/truck-orders",
-        comingSoon: true,
+        comingSoon: false,
       },
     ],
   },
@@ -74,8 +74,20 @@ export const menuItems = [
     href: "/pricing",
   },
   {
-    label: "Platform Config",
-    href: "/platform-config",
+    label: "Configurations",
     comingSoon: false,
+    SubMenu: [
+      {
+       label: "Platform Config",
+    href: "/platform-config",
+        comingSoon: false,
+      },
+      {
+        label: "Transport Fare Config",
+        href: "/transport-fare-config",
+        comingSoon: false,
+      },
+    ],
   },
+ 
 ];

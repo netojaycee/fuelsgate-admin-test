@@ -18,12 +18,21 @@ interface TruckViewDrawerProps {
   truck: TruckDto | null;
   isOpen: boolean;
   onClose: () => void;
+  ownerDetails?: {
+    companyName?: string;
+    companyAddress?: string;
+    companyEmail?: string;
+    phoneNumber?: string;
+  };
+  profileType?: string;
 }
 
 const TruckViewDrawer: React.FC<TruckViewDrawerProps> = ({
   truck,
   isOpen,
   onClose,
+  ownerDetails,
+  profileType,
 }) => {
   if (!truck) return null;
 
@@ -32,7 +41,7 @@ const TruckViewDrawer: React.FC<TruckViewDrawerProps> = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className='w-[400px] sm:w-[540px]'>
+      <SheetContent className='w-[400px] sm:w-[540px] overflow-y-auto'>
         <SheetHeader>
           <SheetTitle>Truck Details</SheetTitle>
           <SheetDescription>
@@ -40,13 +49,54 @@ const TruckViewDrawer: React.FC<TruckViewDrawerProps> = ({
           </SheetDescription>
         </SheetHeader>
 
-        <div className='mt-6 space-y-6'>
+        <div className='mt-6 space-y-6 pb-6'>
+          {/* Owner Details */}
+          <div className='space-y-2'>
+            <label className='text-sm font-medium text-gray-700'>Owner</label>
+            <div className='bg-gray-50 p-3 rounded-md'>
+              <div className='font-semibold text-gray-900'>
+                {ownerDetails?.companyName || "-"}
+              </div>
+              <div className='text-sm text-gray-700'>
+                Type: <span className='font-medium'>{profileType || "-"}</span>
+              </div>
+              {ownerDetails?.companyAddress && (
+                <div className='text-sm text-gray-700'>
+                  Address: {ownerDetails.companyAddress}
+                </div>
+              )}
+              {ownerDetails?.companyEmail && (
+                <div className='text-sm text-gray-700'>
+                  Email: {ownerDetails.companyEmail}
+                </div>
+              )}
+              {ownerDetails?.phoneNumber && (
+                <div className='text-sm text-gray-700'>
+                  Phone: {ownerDetails.phoneNumber}
+                </div>
+              )}
+
+              {truck?.truckOwner && (
+                <div className='text-sm text-gray-700'>
+                  Actual Owner: {truck?.truckOwner}
+                </div>
+              )}
+            </div>
+          </div>
           <div className='space-y-2'>
             <label className='text-sm font-medium text-gray-700'>
               Truck Number
             </label>
             <p className='text-sm text-gray-900 bg-gray-50 p-3 rounded-md'>
               {truck.truckNumber}
+            </p>
+          </div>
+          <div className='space-y-2'>
+            <label className='text-sm font-medium text-gray-700'>
+             Load Status
+            </label>
+            <p className='text-sm text-gray-900 bg-gray-50 p-3 rounded-md'>
+              {truck.loadStatus}
             </p>
           </div>
 

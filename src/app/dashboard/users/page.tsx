@@ -17,6 +17,18 @@ import {
   UserPlus,
 } from "lucide-react";
 import useUserHook from "@/hooks/useUser.hook";
+import { Trash2, Loader2 } from "lucide-react";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatDate } from "@/utils/formatDate";
 
 interface User {
@@ -36,8 +48,12 @@ const Users = () => {
   const [selectedRole, setSelectedRole] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
 
-  const { useFetchUsers, useUpdateUserStatus } = useUserHook();
+  const { useFetchUsers, useUpdateUserStatus, useDeleteUser } = useUserHook();
   const updateStatusMutation = useUpdateUserStatus();
+  const deleteUserMutation = useDeleteUser();
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // Clear status filter when switching to new users tab
   const handleTabChange = (value: string) => {
@@ -64,13 +80,20 @@ const Users = () => {
       params.append("status", "pending");
     }
 
+    // console.log("Query params:", params.toString());
     return params.toString();
   }, [activeTab, searchTerm, selectedRole, selectedStatus]);
 
   const { data: usersData, isLoading } = useFetchUsers(queryParams);
 
   console.log("Users data:", usersData);
-  const users = usersData?.data?.users;
+  const users = (usersData?.data?.users || [])
+    .slice()
+    .sort((a: any, b: any) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
 
   const handleStatusUpdate = async (userId: string, newStatus: string) => {
     try {
@@ -112,7 +135,7 @@ const Users = () => {
       header: "Name",
       accessorKey: "firstName",
       cell: ({ row }: { row: any }) => {
-        const user = row.original._doc;
+        const user = row.original;
         return (
           <div className='flex flex-col'>
             <Text variant='ps' classNames='text-black font-medium'>
@@ -144,10 +167,23 @@ const Users = () => {
       },
     },
     {
+      header: "Phone",
+      accessorKey: "phoneNumber",
+      cell: ({ row }: { row: any }) => (
+        <Text variant='ps' classNames='text-gray-600'>
+          {row?.original?.phoneNumber ? (
+            row.original.phoneNumber
+          ) : (
+            <span className='italic text-gray-400'>Null</span>
+          )}
+        </Text>
+      ),
+    },
+    {
       header: "Status",
       accessorKey: "status",
-      
-      cell: ({ row }: { row: any }) => getStatusBadge(row.original._doc.status),
+
+      cell: ({ row }: { row: any }) => getStatusBadge(row.original.status),
     },
     {
       header: "Joined Date",
@@ -163,50 +199,63 @@ const Users = () => {
       accessorKey: "actions",
       cell: ({ row }: { row: any }) => {
         const user = row.original;
-
-        if (activeTab === "new" && user._doc.status === "pending") {
-          return (
-            <Button
-              size='sm'
-              onClick={() => handleStatusUpdate(user._doc._id, "active")}
-              disabled={updateStatusMutation.isPending}
-              className='bg-green-600 hover:bg-green-700 text-white'
-            >
-              <CheckCircle className='w-4 h-4 mr-1' />
-              Activate
-            </Button>
-          );
-        }
-
-        if (activeTab === "all") {
-          return (
-            <div className='flex gap-2'>
-              {user._doc.status === "active" ? (
+        return (
+          <div className='flex gap-2'>
+            {activeTab === "new" && user.status === "pending" && (
+              <Button
+                size='sm'
+                onClick={() => handleStatusUpdate(user._id, "active")}
+                disabled={updateStatusMutation.isPending}
+                className='bg-green-600 hover:bg-green-700 text-white'
+              >
+                <CheckCircle className='w-4 h-4 mr-1' />
+                Activate
+              </Button>
+            )}
+            {activeTab === "all" && (
+              <>
+                {user.status === "active" ? (
+                  <Button
+                    size='sm'
+                    variant='destructive'
+                    onClick={() => handleStatusUpdate(user._id, "suspended")}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    <XCircle className='w-4 h-4 mr-1' />
+                    Suspend
+                  </Button>
+                ) : (
+                  <Button
+                    size='sm'
+                    onClick={() => handleStatusUpdate(user._id, "active")}
+                    disabled={updateStatusMutation.isPending}
+                    className='bg-green-600 hover:bg-green-700 text-white'
+                  >
+                    <CheckCircle className='w-4 h-4 mr-1' />
+                    Unsuspend
+                  </Button>
+                )}
                 <Button
                   size='sm'
-                  variant='destructive'
-                  onClick={() => handleStatusUpdate(user._doc._id, "suspended")}
-                  disabled={updateStatusMutation.isPending}
+                  variant='ghost'
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setDeleteDialogOpen(true);
+                  }}
+                  disabled={deleteUserMutation?.isPending}
                 >
-                  <XCircle className='w-4 h-4 mr-1' />
-                  Suspend
+                  {deleteUserMutation?.isPending &&
+                  selectedUser?._id === user._id ? (
+                    <Loader2 className='animate-spin w-4 h-4 mr-1' />
+                  ) : (
+                    <Trash2 className='w-4 h-4 mr-1' />
+                  )}
+                  Delete
                 </Button>
-              ) : (
-                <Button
-                  size='sm'
-                  onClick={() => handleStatusUpdate(user._doc._id, "active")}
-                  disabled={updateStatusMutation.isPending}
-                  className='bg-green-600 hover:bg-green-700 text-white'
-                >
-                  <CheckCircle className='w-4 h-4 mr-1' />
-                  Unsuspend
-                </Button>
-              )}
-            </div>
-          );
-        }
-
-        return null;
+              </>
+            )}
+          </div>
+        );
       },
     },
   ];
@@ -237,6 +286,21 @@ const Users = () => {
     { label: "Active", value: "active" },
     { label: "Suspended", value: "suspended" },
   ];
+
+  // Delete user handler
+  const handleDeleteUser = async () => {
+    if (!selectedUser?._id) return;
+    // console.log("Deleting user with id:", selectedUser._id);
+    try {
+      await deleteUserMutation.mutateAsync(selectedUser._id);
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      // Optionally show toast
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+    }
+  };
 
   return (
     <div className='p-6'>
@@ -353,6 +417,28 @@ const Users = () => {
         handleNextPage={handleNextPage}
         handlePreviousPage={handlePreviousPage}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this user? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={deleteUserMutation?.isPending}
+            >
+              {deleteUserMutation?.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

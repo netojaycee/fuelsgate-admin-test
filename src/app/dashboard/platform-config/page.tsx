@@ -35,7 +35,6 @@ import {
   ServiceFeeConfig,
   UpdatePlatformConfigDto,
 } from "@/types/platform-config.types";
-import { Badge } from "@/components/ui/badge";
 
 const PlatformConfig = () => {
   const { toast } = useToast();

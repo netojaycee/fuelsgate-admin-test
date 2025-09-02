@@ -1,3 +1,4 @@
+
 import { requestHandler } from "@/utils/requestHandler";
 
 export const fetchUsersRequest = async (query: string = '') => {
@@ -23,4 +24,14 @@ export const updateUserProfileRequest = async (data: any) => {
 export const updateUserPasswordRequest = async (data: unknown) => {
   const url = `/user/change-password`;
   return await requestHandler('patch', url, data);
+};
+
+export const deleteUserRequest = async (userId: string) => {
+  const url = `/user/${userId}`;
+  return await requestHandler('delete', url);
+};
+
+export const fetchUsersByEmailRequest = async (emails: string[]) => {
+  const url = `/user/by-emails`;
+  return await requestHandler('post', url, { emails });
 };
