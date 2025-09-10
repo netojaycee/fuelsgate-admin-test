@@ -315,17 +315,20 @@ const Trucks = () => {
         <Text variant='ps' classNames='text-black'>
           {row.original.profileType || "-"}
         </Text>
-      ),
-    },
-    {
-      header: "Product",
-      accessorKey: "productId",
-      cell: ({ row }: { row: any }) => (
-        <Text variant='ps' classNames='text-black'>
-          {(row.original.productId as ProductDto).name}
-        </Text>
-      ),
-    },
+            ),
+          },
+          {
+            header: "Product",
+            accessorKey: "productId",
+            cell: ({ row }: { row: any }) => {
+        const product = row.original?.productId as ProductDto | undefined;
+        return (
+          <Text variant='ps' classNames='text-black'>
+            {product?.name || "N/A"}
+          </Text>
+        );
+            },
+          },
     // {
     //   header: "Depot",
     //   accessorKey: "depot",
@@ -354,12 +357,19 @@ const Trucks = () => {
       accessorKey: "capacity",
       cell: ({ row }: { row: any }) => {
       const value = row.original.capacity;
+      if (value == null || value === "") {
+        return (
+        <Text variant='ps' classNames='text-black'>
+          N/A
+        </Text>
+        );
+      }
       const formatted =
         value >= 1_000_000
-          ? `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}M`
-          : value >= 1_000
-          ? `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}k`
-          : value.toLocaleString();
+        ? `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}M`
+        : value >= 1_000
+        ? `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}k`
+        : value.toLocaleString();
       return (
         <Text variant='ps' classNames='text-black'>
         {formatted} Ltr
