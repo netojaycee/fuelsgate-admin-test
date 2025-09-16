@@ -38,13 +38,14 @@ const Depots = () => {
   const updateDepotHubMutation = useUpdateDepotHub();
   const deleteDepotHubMutation = useDeleteDepotHub();
 
+  console.log(data, "depots")
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedDepotHub, setSelectedDepotHub] = useState<DepotHubDto | null>(
-    null
-  );
+  const [selectedDepotHub, setSelectedDepotHub] = useState<DepotHubDto | null>(null);
+  const [activeTab, setActiveTab] = useState<'depots' | 'parks'>('depots');
 
   const handleCreateDepotHub = async (depotHubData: CreateDepotHubDto) => {
     try {
@@ -134,6 +135,15 @@ const Depots = () => {
       },
     },
     {
+      header: "Type",
+      accessorKey: "type",
+      cell: ({ row }: { row: any }) => (
+        <Badge variant='outline' className={row.original.type === 'tanker' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-700'}>
+          {row.original.type === 'tanker' ? 'Tanker' : 'Others'}
+        </Badge>
+      ),
+    },
+    {
       header: "Number of Depots",
       accessorKey: "depots",
       cell: ({ row }: { row: any }) => {
@@ -201,9 +211,29 @@ const Depots = () => {
         </Button>
       </div>
 
+      {/* Tabs for Depots and Parks */}
+      <div className='flex gap-2 mb-4'>
+        <button
+          className={`px-4 py-2 rounded-t-md font-medium border-b-2 ${activeTab === 'depots' ? 'border-blue-600 text-blue-700 bg-blue-50' : 'border-transparent text-gray-500 bg-white'}`}
+          onClick={() => setActiveTab('depots')}
+        >
+          Depots
+        </button>
+        <button
+          className={`px-4 py-2 rounded-t-md font-medium border-b-2 ${activeTab === 'parks' ? 'border-blue-600 text-blue-700 bg-blue-50' : 'border-transparent text-gray-500 bg-white'}`}
+          onClick={() => setActiveTab('parks')}
+        >
+          Parks
+        </button>
+      </div>
+
       <CustomTable
         columns={columns}
-        data={data?.data}
+        data={
+          data?.data?.filter((hub: DepotHubDto) =>
+            activeTab === 'depots' ? hub.type === 'tanker' : hub.type === 'others'
+          ) || []
+        }
         loading={isLoading}
         emptyState={emptyStateMessage}
       />

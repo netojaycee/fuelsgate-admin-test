@@ -281,7 +281,9 @@ const TransportFareConfigPage = () => {
     useFetchDistances,
     useBulkUploadDistances,
     useCalculateFare,
+    useEditDistance,
   } = useTransportFareHook();
+  const editDistanceMutation = useEditDistance();
 
   const { data: configsData, isLoading: loadingConfigs } =
     useFetchTransportConfigs({ page, limit, key: searchTerm || undefined });
@@ -289,6 +291,10 @@ const TransportFareConfigPage = () => {
     useFetchLoadPoints();
   const { data: distancesData, isLoading: loadingDistances } =
     useFetchDistances({ page, limit, key: searchTerm || undefined });
+
+  // State for editing a distance row
+  const [isEditDistanceOpen, setIsEditDistanceOpen] = useState(false);
+  const [selectedDistance, setSelectedDistance] = useState<any | null>(null);
 
   const createConfigMutation = useCreateTransportConfig();
   const updateConfigMutation = useUpdateTransportConfig();
@@ -554,6 +560,22 @@ const TransportFareConfigPage = () => {
                 { header: "LGA", accessorKey: "lga" },
                 { header: "LoadPoint", accessorKey: "loadPoint" },
                 { header: "DistanceKM", accessorKey: "distanceKM" },
+                {
+                  header: "Actions",
+                  accessorKey: "actions",
+                  cell: ({ row }: any) => (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedDistance(row.original);
+                        setIsEditDistanceOpen(true);
+                      }}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  ),
+                },
               ]}
               data={distancesData?.data || []}
               loading={loadingDistances}
@@ -568,6 +590,85 @@ const TransportFareConfigPage = () => {
             handleNextPage={() => setPage(page + 1)}
             handlePreviousPage={() => setPage(Math.max(1, page - 1))}
           />
+
+          {/* Edit Distance Modal */}
+          <Dialog
+            open={isEditDistanceOpen}
+            onOpenChange={(open) => {
+              if (!open) {
+                setIsEditDistanceOpen(false);
+                setSelectedDistance(null);
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Distance</DialogTitle>
+              </DialogHeader>
+              {selectedDistance && (
+                <form
+                  className="space-y-4"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!selectedDistance) return;
+                    const { _id, state, lga, loadPoint, distanceKM } = selectedDistance;
+                    // console.log(selectedDistance)
+                    await editDistanceMutation.mutateAsync({
+                      id: _id,
+                      data: { state, lga, loadPoint, distanceKM: Number(distanceKM) },
+                    });
+                    setIsEditDistanceOpen(false);
+                    setSelectedDistance(null);
+                  }}
+                >
+                  <div>
+                    <label className="block text-sm font-medium mb-1">State</label>
+                    <input
+                      className="w-full border rounded px-3 py-2"
+                      type="text"
+                      value={selectedDistance.state}
+                      onChange={e => setSelectedDistance({ ...selectedDistance, state: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">LGA</label>
+                    <input
+                      className="w-full border rounded px-3 py-2"
+                      type="text"
+                      value={selectedDistance.lga}
+                      onChange={e => setSelectedDistance({ ...selectedDistance, lga: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Load Point</label>
+                    <input
+                      className="w-full border rounded px-3 py-2"
+                      type="text"
+                      value={selectedDistance.loadPoint}
+                      onChange={e => setSelectedDistance({ ...selectedDistance, loadPoint: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Distance KM</label>
+                    <input
+                      className="w-full border rounded px-3 py-2"
+                      type="number"
+                      value={selectedDistance.distanceKM}
+                      onChange={e => setSelectedDistance({ ...selectedDistance, distanceKM: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="ghost" onClick={() => { setIsEditDistanceOpen(false); setSelectedDistance(null); }}>Cancel</Button>
+                    <Button type="submit">Save</Button>
+                  </div>
+                </form>
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="calculator" className="space-y-4">

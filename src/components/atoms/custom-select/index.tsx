@@ -44,6 +44,7 @@ type CustomSelectProps = {
   error?: string;
   labelHTMLElements?: LabelHTMLAttributes<HTMLLabelElement>;
   isDisabled?: boolean;
+  placeholder?: string;
 };
 
 const DefaultOption: React.FC<
@@ -74,6 +75,7 @@ const CustomSelect = forwardRef<
       name,
       classNames,
       value,
+      placeholder,
       onChange,
       Option = DefaultOption,
       ValueContainer = DefaultValueContainer,
@@ -94,7 +96,7 @@ const CustomSelect = forwardRef<
         fontSize: "14px",
         fontWeight: "normal",
         height: "auto",
-        minHeight: height ?? "56px",
+        minHeight: height ?? "40px",
         borderRadius: borderRadius ?? "6px",
         borderColor: "#D0D5DD",
         boxShadow: "none",

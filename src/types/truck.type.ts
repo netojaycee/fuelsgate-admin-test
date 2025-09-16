@@ -18,6 +18,9 @@ export interface TruckDto {
   truckOrderId?: string;
   createdAt?: string;
   updatedAt?: string;
+  truckCategory: string;
+  truckFuelType: string;
+  truckType: 'tanker' | 'flatbed' | 'sidewall' | 'lowbed'; // Type of truck
   ownerId?: string; // ID of the owner, if applicable
   truckOwner?: string; // Name of the truck owner, if different from profileId.companyName
   ownerLogo?: string; // URL or path to the owner's logo

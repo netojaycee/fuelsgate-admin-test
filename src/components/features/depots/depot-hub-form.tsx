@@ -1,25 +1,28 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { Button } from "@/components/ui/button";
+import useStateHook from '@/hooks/useState.hook';
 import {
   CreateDepotHubDto,
   DepotHubDto,
   UpdateDepotHubDto,
 } from "@/types/depot-hub.types";
 import { X, Plus } from "lucide-react";
-import CustomInput from "@/components/atoms/custom-input";
+
+import { CustomSelect } from "@/components/atoms/custom-select";
 
 const depotHubSchema = yup.object({
   name: yup.string().required("Depot hub name is required"),
+  type: yup.string().oneOf(['tanker', 'others']).required('Type is required'),
 });
 
 interface DepotHubFormProps {
   initialData?: DepotHubDto;
-  onSubmit: (data: { name: string; depots: string[] }) => void;
+  onSubmit: (data: { name: string; depots: string[]; type: 'tanker' | 'others' }) => void;
   isLoading?: boolean;
   onCancel: () => void;
 }
@@ -32,16 +35,23 @@ const DepotHubForm: React.FC<DepotHubFormProps> = ({
 }) => {
   const [depots, setDepots] = useState<string[]>([]);
   const [newDepot, setNewDepot] = useState("");
+  const [type, setType] = useState<'tanker' | 'others'>('tanker');
+  const [selectedState, setSelectedState] = useState<any>(undefined);
+  const { useFetchStates } = useStateHook();
+  const { data: statesRes } = useFetchStates;
+  const stateOptions = useMemo(() => (statesRes ? statesRes.map((s:any) => ({ label: s, value: s })) : []), [statesRes]);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<{ name: string }>({
+    setValue,
+  } = useForm<{ name: string; type: 'tanker' | 'others' }>({
     resolver: yupResolver(depotHubSchema),
     defaultValues: {
       name: "",
+      type: 'tanker',
     },
   });
 
@@ -49,8 +59,11 @@ const DepotHubForm: React.FC<DepotHubFormProps> = ({
     if (initialData) {
       reset({
         name: initialData.name,
+        type: initialData.type || 'tanker',
       });
+      setType(initialData.type || 'tanker');
       setDepots(initialData.depots || []);
+      setSelectedState(initialData.name ? { label: initialData.name, value: initialData.name } : undefined);
     }
   }, [initialData, reset]);
 
@@ -65,11 +78,13 @@ const DepotHubForm: React.FC<DepotHubFormProps> = ({
     setDepots(depots.filter((depot) => depot !== depotToRemove));
   };
 
-  const handleFormSubmit = (data: { name: string }) => {
+  const handleFormSubmit = (data: { name: string; type: 'tanker' | 'others' }) => {
     const formData = {
-      name: data.name,
+      name: selectedState?.value || data.name,
       depots: depots,
+      type: data.type,
     };
+    console.log("Submitting Depot Hub Form with data:", formData);
     onSubmit(formData);
   };
 
@@ -81,13 +96,34 @@ const DepotHubForm: React.FC<DepotHubFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-6'>
-      <CustomInput
+    <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+      <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-6'>
+
+      <CustomSelect
         name='name'
-        label='Depot Hub Name'
-        register={register}
+        label='Depot Hub State'
+        options={stateOptions}
+        value={selectedState}
+        onChange={(v:any) => {
+          setSelectedState(v);
+          setValue('name', v?.value || '');
+        }}
         error={errors.name?.message}
-        placeholder='Enter depot hub name'
+      />
+
+      <CustomSelect
+        name='type'
+        label='Type'
+        options={[
+          { label: 'Tanker', value: 'tanker' },
+          { label: 'Others', value: 'others' },
+        ]}
+        value={{ label: type === 'tanker' ? 'Tanker' : 'Others', value: type }}
+        onChange={(v: any) => {
+          setType(v.value);
+          setValue('type', v.value);
+        }}
+        error={errors.type?.message}
       />
   
 
@@ -164,7 +200,8 @@ const DepotHubForm: React.FC<DepotHubFormProps> = ({
             : "Create Depot Hub"}
         </Button>
       </div>
-    </form>
+      </form>
+    </div>
   );
 };
 

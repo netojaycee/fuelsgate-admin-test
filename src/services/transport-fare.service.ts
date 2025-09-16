@@ -1,3 +1,5 @@
+// Edit a distance record
+
 import { requestHandler } from '@/utils/requestHandler';
 import {
   CreateTransportConfigDto,
@@ -52,4 +54,8 @@ export const bulkUploadDistancesRequest = async (rows: BulkUploadDistanceDto[]) 
 
 export const calculateFareRequest = async (payload: CalculateFareDto) => {
   return await requestHandler('post', `/transport-fare/calculate`, payload);
+};
+
+export const editDistanceRequest = async (id: string, data: any) => {
+  return await requestHandler('put', `/transport-fare/admin/distances/${id}`, data);
 };

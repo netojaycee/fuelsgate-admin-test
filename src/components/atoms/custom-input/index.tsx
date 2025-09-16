@@ -63,7 +63,7 @@ const CustomInput = forwardRef<HTMLInputElement, CustomInputProps>(
           <input
             type={type === 'password' && showPassword ? 'text' : type}
             className={cn(
-              'w-full h-14 px-4 text-sm border border-mid-gray-450 rounded-md focus:outline-none',
+              'w-full h-10 px-4 text-sm border border-mid-gray-450 rounded-md focus:outline-none',
               (type === 'tel' || prefix) && (prefixPadding ?? 'pl-20'),
               affix && (affixPadding ?? 'pr-4'),
               className,

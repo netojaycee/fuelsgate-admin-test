@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useCallback, useState, useMemo } from "react";
-import useStateHook from '@/hooks/useState.hook';
+import useStateHook from "@/hooks/useState.hook";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -22,7 +22,7 @@ import {
   CustomProductOptionWrapper,
   CustomValueContainerWrapper,
 } from "@/components/common/product-select-components";
-import { TRUCK_SIZES } from "@/lib/data";
+import { TRUCK_SIZES, NON_TANKER_SIZES } from "@/lib/data";
 import { LitreValueContainerWrapper } from "./truck-capacity-value";
 
 const LOAD_STATUS_OPTIONS = [
@@ -32,39 +32,10 @@ const LOAD_STATUS_OPTIONS = [
 
 // Truck type options
 const TRUCK_TYPES = [
-  { label: 'Tanker', value: 'tanker' },
-  { label: 'Flat Bed', value: 'flatbed' },
-];
-
-const FLATBED_SUBTYPES = [
-  { label: 'Standard (48-53\')', value: 'standard' },
-  { label: 'Step-deck', value: 'step-deck' },
-  { label: 'Double-drop', value: 'double-drop' },
-  { label: 'Extendable', value: 'extendable' },
-  { label: 'Conestoga', value: 'conestoga' },
-  { label: 'Side-kit', value: 'side-kit' },
-];
-
-const EQUIPMENT_OPTIONS = [
-  { label: 'Tarps', value: 'tarps' },
-  { label: 'Chains', value: 'chains' },
-  { label: 'Straps', value: 'straps' },
-  { label: 'Binders', value: 'binders' },
-  { label: 'Winches', value: 'winches' },
-];
-
-const CARGO_TYPES = [
-  { label: 'Lumber', value: 'lumber' },
-  { label: 'Steel', value: 'steel' },
-  { label: 'Machinery', value: 'machinery' },
-  { label: 'Pipes', value: 'pipes' },
-  { label: 'Building materials', value: 'building_materials' },
-];
-
-const COUNTRY_OPTIONS = [
-  { label: 'Nigeria', value: 'Nigeria' },
-  { label: 'Ghana', value: 'Ghana' },
-  { label: 'Kenya', value: 'Kenya' },
+  { label: "Tanker", value: "tanker" },
+  { label: "Flatbed", value: "flatbed" },
+  { label: "SideWall", value: "sidewall" },
+  { label: "Lowbed", value: "lowbed" },
 ];
 
 const truckSchema = yup.object({
@@ -73,7 +44,7 @@ const truckSchema = yup.object({
     .number()
     .required("Capacity is required")
     .min(1, "Capacity must be greater than 0"),
-  productId: yup.string().required("Product is required"),
+  productId: yup.string().optional(),
   depotHubId: yup.string().required("Depot hub is required"),
   depot: yup.string().required("Depot is required"),
   ownerId: yup.string().when("$hasOwnerDetails", {
@@ -88,8 +59,40 @@ const truckSchema = yup.object({
   }),
   ownerLogo: yup.string().optional(),
   deliveryType: yup.string().required("Delivery type is required"),
-  loadStatus: yup.string().required("Load status is required"),
+  loadStatus: yup.string().optional(),
 });
+
+const TRUCK_FUEL_TYPES = [
+  { label: "CNG Powered", value: "cng" },
+  { label: "Diesel Powered", value: "diesel" },
+];
+
+const TRUCK_CATEGORY_OPTIONS = [
+  {
+    label: "Category A++",
+    value: "A++",
+    description: "CNG Trucks",
+    ageRange: "CNG only",
+  },
+  {
+    label: "Category A",
+    value: "A",
+    description: "Modern Trucks",
+    ageRange: "Less than 7 years old",
+  },
+  {
+    label: "Category B",
+    value: "B",
+    description: "Mid-Age Trucks",
+    ageRange: "7 to 15 years old",
+  },
+  {
+    label: "Category C",
+    value: "C",
+    description: "Older Trucks",
+    ageRange: "15+ years old",
+  },
+];
 
 // Delivery type options
 const DELIVERY_TYPES = [
@@ -98,8 +101,8 @@ const DELIVERY_TYPES = [
 ];
 
 const FLATBED_DELIVERY_TYPES = [
-  { label: 'In Country', value: 'in_country' },
-  { label: 'Up Country', value: 'up_country' },
+  { label: "In Country", value: "in_country" },
+  { label: "Up Country", value: "up_country" },
 ];
 
 interface TruckFormProps {
@@ -121,20 +124,8 @@ type TruckFormFields = {
   deliveryType?: string;
   loadStatus?: "loaded" | "unloaded";
   truckType?: string;
-  // flatbed fields
-  flatbedSubtype?: string;
-  deckLengthFt?: string;
-  deckWidthFt?: string;
-  maxPayloadKg?: string;
-  equipment?: string[];
-  preferredCargoTypes?: string[];
-  permitRequired?: string;
-  notes?: string;
-  country?: string;
-  city?: string;
-  address?: string;
-  currentState?: string;
-  currentCity?: string;
+  truckCategory: string;
+  truckFuelType: string;
 };
 
 const TruckForm: React.FC<TruckFormProps> = ({
@@ -147,30 +138,25 @@ const TruckForm: React.FC<TruckFormProps> = ({
   const [product, setProduct] = useState<CustomSelectOption | undefined>(
     undefined
   );
-  const [truckType, setTruckType] = useState<CustomSelectOption | undefined>(undefined);
+  const [truckType, setTruckType] = useState<CustomSelectOption | undefined>(
+    undefined
+  );
   const [capacity, setCapacity] = useState<CustomSelectOption | undefined>(
     undefined
   );
   // flatbed specific state
-  const [flatbedSubtype, setFlatbedSubtype] = useState<CustomSelectOption | undefined>(undefined);
-  const [deckLengthFt, setDeckLengthFt] = useState<string>('');
-  const [deckWidthFt, setDeckWidthFt] = useState<string>('8.5');
-  const [maxPayloadKg, setMaxPayloadKg] = useState<string>('');
-  const [equipment, setEquipment] = useState<CustomSelectOption[] | undefined>(undefined);
-  const [preferredCargoTypes, setPreferredCargoTypes] = useState<CustomSelectOption[] | undefined>(undefined);
-  const [permitRequired, setPermitRequired] = useState<CustomSelectOption | undefined>(undefined);
-  const [notes, setNotes] = useState<string>('');
-  const [country, setCountry] = useState<CustomSelectOption | undefined>(COUNTRY_OPTIONS[0]);
-  const [city, setCity] = useState<CustomSelectOption | undefined>(undefined);
-  const [address, setAddress] = useState<string>('');
-  const [selectedState, setSelectedState] = useState<CustomSelectOption | undefined>(undefined);
-  const [selectedLGA, setSelectedLGA] = useState<CustomSelectOption | undefined>(undefined);
   const [depotHub, setDepotHub] = useState<CustomSelectOption | undefined>(
     undefined
   );
   const [loadStatus, setLoadStatus] = useState<CustomSelectOption>(
     LOAD_STATUS_OPTIONS[1]
   ); // Default to Unloaded
+  const [truckFuelType, setTruckFuelType] = useState<
+    CustomSelectOption | undefined
+  >(undefined);
+  const [truckCategory, setTruckCategory] = useState<
+    CustomSelectOption | undefined
+  >(undefined);
   const [depot, setDepot] = useState<CustomSelectOption | undefined>(undefined);
   const [deliveryType, setDeliveryType] = useState<
     CustomSelectOption | undefined
@@ -186,9 +172,9 @@ const TruckForm: React.FC<TruckFormProps> = ({
   }, [initialData]);
 
   // const userEmails = [
-    // { label: "DOCKYARD", email: "vohakim@fuelsgate.com" },
-    // { label: "DANGOTE", email: "info@fuelsgate.com" },
-    // { label: "COCONUT", email: "nohakim@fuelsgate.com" },
+  // { label: "DOCKYARD", email: "vohakim@fuelsgate.com" },
+  // { label: "DANGOTE", email: "info@fuelsgate.com" },
+  // { label: "COCONUT", email: "nohakim@fuelsgate.com" },
   //   ...(process.env.NODE_ENV === "development"
   //     ? [
   //         {
@@ -198,7 +184,6 @@ const TruckForm: React.FC<TruckFormProps> = ({
   //       ]
   //     : []),
   // ];
-
 
   const userEmails = [
     { label: "DOCKYARD", email: "fuelsgatedockyard@gmail.com" },
@@ -254,19 +239,22 @@ const TruckForm: React.FC<TruckFormProps> = ({
               ? initialData.truckOwner || ""
               : undefined,
             ownerLogo: initialData.ownerLogo || "",
+            truckFuelType: initialData?.truckFuelType || "",
+            truckCategory: initialData?.truckCategory || "",
+            truckType: initialData?.truckType || "tanker",
+
             loadStatus: initialData.loadStatus || "unloaded",
           }
         : {}),
     },
   });
 
+  console.log(initialData, "initial")
+  
   // Fetch products and depots
   const { useFetchProducts } = useProductHook();
   const { data: productsData, isLoading: loadingProducts } = useFetchProducts();
-  const { useFetchStates, useFetchStateLGA } = useStateHook();
-  const { data: statesRes } = useFetchStates;
-  const [selectedStateForFlatbed, setSelectedStateForFlatbed] = useState<any>(undefined);
-  const { data: lgaRes } = useFetchStateLGA(selectedStateForFlatbed?.value);
+    useState<any>(undefined);
 
   const { useFetchDepotHubs } = useDepotHubHook();
   const { data: depotsData, isLoading: loadingDepots } = useFetchDepotHubs();
@@ -291,8 +279,6 @@ const TruckForm: React.FC<TruckFormProps> = ({
     }
     return [];
   }, [productsData]);
-  const states = useMemo(() => (statesRes ? statesRes.map((s:any) => ({ label: s, value: s })) : []), [statesRes]);
-  const lgas = useMemo(() => (lgaRes ? lgaRes.map((l:any) => ({ label: l, value: l })) : []), [lgaRes]);
 
   const handleCapacityChange = useCallback(
     (value: unknown) => {
@@ -314,15 +300,35 @@ const TruckForm: React.FC<TruckFormProps> = ({
     }
   }, [capacity, setValue]);
 
+  // const depotHubs = useMemo(() => {
+  //   if (depotsData) {
+  //     return depotsData?.data?.map((item: DepotHubDto) => ({
+  //       label: item.name,
+  //       value: item._id,
+  //     }));
+  //   }
+  //   return [];
+  // }, [depotsData]);
+
   const depotHubs = useMemo(() => {
-    if (depotsData) {
-      return depotsData?.data?.map((item: DepotHubDto) => ({
-        label: item.name,
-        value: item._id,
-      }));
+    if (!depotsData) return [];
+    if (truckType?.value === "tanker") {
+      return depotsData?.data
+        ?.filter((item: DepotHubDto) => item.type === "tanker")
+        .map((item: DepotHubDto) => ({
+          label: item.name,
+          value: item._id,
+        }));
+    } else if (truckType) {
+      return depotsData?.data
+        ?.filter((item: DepotHubDto) => item.type === "others")
+        .map((item: DepotHubDto) => ({
+          label: item.name,
+          value: item._id,
+        }));
     }
     return [];
-  }, [depotsData]);
+  }, [depotsData, truckType]);
 
   const depots = useMemo(() => {
     if (depotHub) {
@@ -370,34 +376,14 @@ const TruckForm: React.FC<TruckFormProps> = ({
     const t = value as CustomSelectOption;
     setTruckType(t);
     // reset fields depending on type
-    if (t?.value === 'flatbed') {
-      // clear tanker-only fields
-      setDepotHub(undefined);
-      setDepot(undefined);
-      setProduct(undefined);
-      setCapacity(undefined);
-    } else {
-      // clear flatbed-only fields
-      setFlatbedSubtype(undefined);
-      setDeckLengthFt('');
-      setDeckWidthFt('8.5');
-      setMaxPayloadKg('');
-      setEquipment(undefined);
-      setPreferredCargoTypes(undefined);
-      setPermitRequired(undefined);
-      setNotes('');
-      setCountry(COUNTRY_OPTIONS[0]);
-      setCity(undefined);
-      setAddress('');
-    }
+    // if (t?.value === "flatbed") {
+    //   // clear tanker-only fields
+    //   setDepotHub(undefined);
+    //   setDepot(undefined);
+    //   setProduct(undefined);
+    //   setCapacity(undefined);
+    // }
   }, []);
-  const handleFlatbedSubtypeChange = useCallback((value: unknown) => { setFlatbedSubtype(value as CustomSelectOption); }, []);
-  const handleEquipmentChange = useCallback((value: unknown) => { setEquipment(value as CustomSelectOption[]); }, []);
-  const handlePreferredCargoChange = useCallback((value: unknown) => { setPreferredCargoTypes(value as CustomSelectOption[]); }, []);
-  const handleCountryChange = useCallback((value: unknown) => { setCountry(value as CustomSelectOption); setCity(undefined); }, []);
-  const handleCityChange = useCallback((value: unknown) => { setCity(value as CustomSelectOption); }, []);
-  const handleStateChange = useCallback((value: unknown) => { setSelectedStateForFlatbed(value as CustomSelectOption); setSelectedLGA(undefined); }, []);
-  const handleLGAChange = useCallback((value: unknown) => { setSelectedLGA(value as CustomSelectOption); }, []);
 
   const handleDepotChange = useCallback((value: unknown) => {
     setDepot(value as CustomSelectOption);
@@ -428,23 +414,9 @@ const TruckForm: React.FC<TruckFormProps> = ({
   }, [product, setValue]);
   useEffect(() => {
     if (truckType) {
-      setValue('truckType', truckType.value as 'tanker' | 'flatbed');
+      setValue("truckType", truckType.value as "tanker" | "flatbed");
     }
   }, [truckType, setValue]);
-  // bind flatbed fields to form values
-  useEffect(() => {
-    if (flatbedSubtype) setValue('flatbedSubtype', flatbedSubtype.value);
-    if (deckLengthFt !== undefined) setValue('deckLengthFt', deckLengthFt);
-    if (deckWidthFt !== undefined) setValue('deckWidthFt', deckWidthFt);
-    if (maxPayloadKg !== undefined) setValue('maxPayloadKg', maxPayloadKg);
-    if (equipment) setValue('equipment', equipment.map((e) => e.value));
-    if (preferredCargoTypes) setValue('preferredCargoTypes', preferredCargoTypes.map((c) => c.value));
-    if (permitRequired) setValue('permitRequired', permitRequired?.value);
-    if (notes !== undefined) setValue('notes', notes);
-    if (country) setValue('country', country.value);
-    if (city) setValue('city', city?.value || '');
-    if (address !== undefined) setValue('address', address);
-  }, [flatbedSubtype, deckLengthFt, deckWidthFt, maxPayloadKg, equipment, preferredCargoTypes, permitRequired, notes, country, city, address, setValue]);
 
   useEffect(() => {
     if (loadStatus) {
@@ -469,6 +441,18 @@ const TruckForm: React.FC<TruckFormProps> = ({
       setValue("deliveryType", deliveryType.value);
     }
   }, [deliveryType, setValue]);
+
+  useEffect(() => {
+    if (truckType)
+      setValue(
+        "truckType",
+        truckType.value as "tanker" | "flatbed" | "sidewall" | "lowbed"
+      );
+    if (truckFuelType)
+      setValue("truckFuelType", truckFuelType.value as "diesel" | "cng");
+    if (truckCategory)
+      setValue("truckCategory", truckCategory.value as "A++" | "A" | "B" | "C");
+  }, [truckType, truckFuelType, truckCategory, setValue]);
 
   useEffect(() => {
     if (owner && hasOwnerDetails) {
@@ -500,20 +484,51 @@ const TruckForm: React.FC<TruckFormProps> = ({
 
     if (getValues("capacity")) {
       const capacityValue = getValues("capacity").toString();
-      const _selectedCapacity = TRUCK_SIZES?.find(
-        (item: CustomSelectOption) => item.value === capacityValue
+      // Determine which sizes to use based on truckType
+      const truckTypeValue = getValues("truckType");
+      const sizeOptions =
+      truckTypeValue && truckTypeValue === "tanker"
+        ? TRUCK_SIZES
+        : NON_TANKER_SIZES;
+
+      const _selectedCapacity = sizeOptions?.find(
+      (item: CustomSelectOption) => item.value === capacityValue
       );
 
       if (_selectedCapacity) {
-        setCapacity(_selectedCapacity);
+      setCapacity(_selectedCapacity);
       }
     }
     // initialize truck type
-    if (getValues('truckType')) {
+    if (getValues("truckType")) {
       const _selectedTruckType = TRUCK_TYPES.find(
-        (item: CustomSelectOption) => item.value === getValues('truckType'),
+        (item: CustomSelectOption) => item.value === getValues("truckType")
       );
       if (_selectedTruckType) setTruckType(_selectedTruckType);
+    }
+
+    if (getValues("truckFuelType")) {
+      const _selectedTruckFuelType = TRUCK_FUEL_TYPES.find(
+        (item: CustomSelectOption) =>
+          item.value === getValues("truckFuelType")
+      );
+      if (_selectedTruckFuelType) setTruckFuelType(_selectedTruckFuelType);
+    }
+
+    if (getValues("truckCategory")) {
+      const _selectedTruckCategory = TRUCK_CATEGORY_OPTIONS.find(
+        (item: CustomSelectOption) =>
+          item.value === getValues("truckCategory")
+      );
+      if (_selectedTruckCategory) setTruckCategory(_selectedTruckCategory);
+    }
+
+    if (getValues("loadStatus")) {
+      const _selectedLoadStatus = LOAD_STATUS_OPTIONS.find(
+        (item: CustomSelectOption) =>
+          item.value === getValues("loadStatus")
+      );
+      if (_selectedLoadStatus) setLoadStatus(_selectedLoadStatus);
     }
 
     if (getValues("depot") && depots && depots.length > 0) {
@@ -588,7 +603,7 @@ const TruckForm: React.FC<TruckFormProps> = ({
   ]);
 
   return (
-    <div className='max-h-[calc(100vh-200px)] overflow-y-auto pr-2'>
+    <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
       <form
         onSubmit={handleSubmit((data) => {
           // Validate delivery type
@@ -616,7 +631,11 @@ const TruckForm: React.FC<TruckFormProps> = ({
               .replace(/^L-/, ""); // Remove existing L- prefix
 
             // For flatbed: up_country -> B/L- (same as bridging), in_country -> L-
-            if (data.deliveryType === "bridging" || data.deliveryType === 'up_country') {
+            if (
+              data.deliveryType === "bridging" ||
+              data.deliveryType === "up_country"
+              // Remove loadStatus and productId if truckType is not 'tanker'
+            ) {
               (data as any).truckNumber = `B/L-${rawTruckNumber}`;
             } else {
               (data as any).truckNumber = `L-${rawTruckNumber}`;
@@ -630,10 +649,18 @@ const TruckForm: React.FC<TruckFormProps> = ({
 
           // Remove deliveryType from data before sending to API
           const { deliveryType, ...truckData } = data;
+          if (truckData.truckType !== "tanker") {
+            delete truckData.loadStatus;
+            delete truckData.productId;
+          }
 
           // For edit mode with owner details, send both ownerId and profileType/profileId
           const sanitizeCapacity = (payload: any) => {
-            if (payload && payload.capacity !== undefined && payload.capacity !== null) {
+            if (
+              payload &&
+              payload.capacity !== undefined &&
+              payload.capacity !== null
+            ) {
               const num = Number(payload.capacity);
               if (!isNaN(num)) payload.capacity = num;
               else delete payload.capacity;
@@ -655,38 +682,122 @@ const TruckForm: React.FC<TruckFormProps> = ({
             };
             onSubmit(sanitizeCapacity(editData));
           } else {
+            console.log({ ...truckData });
             // For create mode or trucks without owner details
             onSubmit(sanitizeCapacity({ ...truckData }));
           }
         })}
-        className='space-y-4 pb-6'
+        className="space-y-4 pb-6"
       >
-        <div className='bg-light-gray-150 grid grid-cols-2 gap-3 py-[10px] px-4 rounded-[10px] mb-3'>
-          <CustomSelect
+        <div className="bg-light-gray-150 grid grid-cols-2 gap-3 py-[10px] px-4 rounded-[10px] mb-3">
+          {/* <CustomSelect
             name='truckType'
             label='Truck Type'
             options={TRUCK_TYPES}
             value={truckType}
             onChange={handleTruckTypeChange}
             error={errors.truckType as any}
-          />
+          /> */}
 
+          <div className="col-span-full" style={{ pointerEvents: "auto" }}>
+            {/* Original CustomSelect - commented for debugging */}
+            <CustomSelect
+              name="truckType"
+              label="Truck Type"
+              options={TRUCK_TYPES}
+              value={truckType}
+              onChange={handleTruckTypeChange}
+              error={errors.truckType?.message}
+              // classNames="relative z-50"
+              placeholder="Truck type"
+            />
+          </div>
+          {truckType?.value === "tanker" && (
+            <div className="col-span-full " style={{ pointerEvents: "auto" }}>
+              {" "}
+              <CustomSelect
+                name="productId"
+                label="Product"
+                options={products}
+                Option={CustomProductOptionWrapper}
+                ValueContainer={CustomValueContainerWrapper}
+                value={product}
+                onChange={handleProductChange}
+                error={errors.productId?.message}
+                isDisabled={loadingProducts}
+                classNames="col-span-full"
+              />
+            </div>
+          )}
           <CustomInput
-            type='text'
-            name='truckNumber'
-            label='Truck Number'
+            type="text"
+            name="truckNumber"
+            label="Truck Number"
             register={register}
             error={errors.truckNumber?.message}
           />
           <CustomSelect
-            name='deliveryType'
-            label='Delivery Type'
-            options={truckType?.value === 'flatbed' ? FLATBED_DELIVERY_TYPES : DELIVERY_TYPES}
+            name="deliveryType"
+            label="Delivery Type"
+            options={
+              truckType?.value === "tanker"
+                ? DELIVERY_TYPES
+                : FLATBED_DELIVERY_TYPES
+            }
             value={deliveryType}
             onChange={handleDeliveryTypeChange}
             error={errors.deliveryType?.message}
           />
-          <CustomSelect
+
+          <div className="">
+            <CustomSelect
+              name="truckFuelType"
+              label="Truck Fuel Type"
+              options={TRUCK_FUEL_TYPES}
+              value={truckFuelType}
+              onChange={(value) => {
+                setTruckFuelType(value as CustomSelectOption);
+                // Reset truck category when fuel type changes
+                setTruckCategory(undefined);
+              }}
+              error={errors.truckFuelType?.message}
+              classNames=" mt-2"
+              placeholder="Fuel type"
+            />
+          </div>
+
+          <div className="">
+            <CustomSelect
+              label="Truck Category"
+              name="truckCategory"
+              options={
+                truckFuelType?.value === "cng"
+                  ? TRUCK_CATEGORY_OPTIONS.filter(
+                      (opt) => opt.value === "A++"
+                    ).map((opt) => ({
+                      label: `${opt.label} — ${opt.description} (${opt.ageRange})`,
+                      value: opt.value,
+                    }))
+                  : TRUCK_CATEGORY_OPTIONS.filter(
+                      (opt) => opt.value !== "A++"
+                    ).map((opt) => ({
+                      label: `${opt.label} — ${opt.description} (${opt.ageRange})`,
+                      value: opt.value,
+                    }))
+              }
+              value={truckCategory}
+              onChange={(value) =>
+                setTruckCategory(value as CustomSelectOption)
+              }
+              placeholder="Truck category"
+              classNames="border-gray-300 mt-2"
+              isDisabled={!truckFuelType}
+            />
+            <div className="text-xs text-gray-500 mt-1">
+              Note: Older trucks tend to consume more fuel.
+            </div>
+          </div>
+          {/* <CustomSelect
             name='loadStatus'
             label='Load Status'
             options={LOAD_STATUS_OPTIONS}
@@ -705,28 +816,60 @@ const TruckForm: React.FC<TruckFormProps> = ({
             error={errors.capacity?.message}
             ValueContainer={LitreValueContainerWrapper}
             // classNames='w-full col-span-full'
-          />
+          /> */}
+
+          {truckType?.value === "tanker" ? (
+            <div className="col-span-full flex gap-3">
+              <div className="flex-1">
+                <CustomSelect
+                  name="capacity"
+                  label="Capacity"
+                  options={TRUCK_SIZES}
+                  value={capacity}
+                  onChange={handleCapacityChange}
+                  error={errors.capacity?.message}
+                  ValueContainer={LitreValueContainerWrapper}
+                  classNames=""
+                  // unit="Ltr"
+                  placeholder="Capacity"
+                />
+              </div>
+              <div className="flex-1">
+                <CustomSelect
+                  name="loadStatus"
+                  label="Load Status"
+                  options={LOAD_STATUS_OPTIONS}
+                  value={loadStatus}
+                  onChange={(value: unknown) =>
+                    setLoadStatus(value as CustomSelectOption)
+                  }
+                  error={errors.loadStatus?.message}
+                  classNames=""
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="col-span-full ">
+              <CustomSelect
+                name="capacity"
+                label="Capacity"
+                options={NON_TANKER_SIZES}
+                value={capacity}
+                onChange={handleCapacityChange}
+                error={errors.capacity?.message}
+                ValueContainer={LitreValueContainerWrapper}
+                classNames=""
+                // unit="Tons"
+                placeholder="Capacity"
+              />
+            </div>
+          )}
         </div>
 
-        <div className='bg-light-gray-150 grid grid-cols-2 gap-3 py-[10px] px-4 rounded-[10px] mb-3'>
+        <div className="bg-light-gray-150 grid grid-cols-2 gap-3 py-[10px] px-4 rounded-[10px] mb-3">
           <CustomSelect
-            name='productId'
-            label='Product'
-            options={products}
-            Option={CustomProductOptionWrapper}
-            ValueContainer={CustomValueContainerWrapper}
-            value={product}
-            onChange={handleProductChange}
-            error={errors.productId?.message}
-            isDisabled={loadingProducts}
-            classNames='col-span-full'
-          />
-        </div>
-
-        <div className='bg-light-gray-150 grid grid-cols-2 gap-3 py-[10px] px-4 rounded-[10px] mb-3'>
-          <CustomSelect
-            name='depotHubId'
-            label='Depot Hub'
+            name="depotHubId"
+            label="Hub"
             options={depotHubs}
             value={depotHub}
             onChange={handleDepotHubChange}
@@ -734,8 +877,8 @@ const TruckForm: React.FC<TruckFormProps> = ({
             isDisabled={loadingDepots}
           />
           <CustomSelect
-            name='depot'
-            label='Depot'
+            name="depot"
+            label="Depot"
             options={depots}
             value={depot}
             onChange={handleDepotChange}
@@ -746,10 +889,10 @@ const TruckForm: React.FC<TruckFormProps> = ({
 
         {/* Owner fields - only show if hasOwnerDetails is true */}
         {hasOwnerDetails && (
-          <div className='bg-light-gray-150 grid grid-cols-2 gap-3 py-[10px] px-4 rounded-[10px] mb-3'>
+          <div className="bg-light-gray-150 grid grid-cols-2 gap-3 py-[10px] px-4 rounded-[10px] mb-3">
             <CustomSelect
-              name='ownerId'
-              label='Owner (Required)'
+              name="ownerId"
+              label="Owner (Required)"
               options={users}
               value={owner}
               onChange={handleOwnerChange}
@@ -757,18 +900,18 @@ const TruckForm: React.FC<TruckFormProps> = ({
               isDisabled={loadingUsers || !!initialData} // Disabled in edit mode
             />
             <CustomInput
-              type='text'
-              name='truckOwner'
-              label='Truck Owner Name (Required)'
+              type="text"
+              name="truckOwner"
+              label="Truck Owner Name (Required)"
               register={register}
               error={errors.truckOwner?.message}
             />
-            <div className='col-span-full'>
+            <div className="col-span-full">
               <CustomFileUpload
-                name='ownerLogo'
-                label='Owner Logo (Optional)'
-                fileType='image'
-                customLabel='Owner Logo'
+                name="ownerLogo"
+                label="Owner Logo (Optional)"
+                fileType="image"
+                customLabel="Owner Logo"
                 defaultValue={ownerLogo}
                 onChange={handleOwnerLogoChange}
                 error={errors.ownerLogo?.message}
@@ -777,211 +920,16 @@ const TruckForm: React.FC<TruckFormProps> = ({
           </div>
         )}
 
-        {/* <div className='bg-light-gray-150 grid grid-cols-2 gap-3 py-[10px] px-4 rounded-[10px] mb-8'>
-          <CustomInput
-            name='currentState'
-            label='Current State'
-            register={register}
-            error={errors.currentState?.message}
-          />
-          <CustomInput
-            name='currentCity'
-            label='Current City'
-            register={register}
-            error={errors.currentCity?.message}
-          />
-        </div> */}
-
-        {/* Conditional flatbed/tanker section */}
-        {truckType && (
-          <div className='bg-light-gray-150 grid grid-cols-2 max-sm:grid-cols-1 gap-3 py-[10px] px-4 rounded-[10px] mb-3'>
-            {truckType.value === 'flatbed' ? (
-              <>
-                <div>
-                  <CustomSelect
-                    label='Flatbed Subtype'
-                    name='flatbedSubtype'
-                    options={FLATBED_SUBTYPES}
-                    value={flatbedSubtype}
-                    onChange={handleFlatbedSubtypeChange}
-                    error={errors.flatbedSubtype?.message}
-                  />
-                </div>
-
-                <div>
-                  <CustomInput
-                    type='number'
-                    name='deckLengthFt'
-                    label='Deck length (ft)'
-                    value={deckLengthFt}
-                    onChange={(e) => setDeckLengthFt(e.target.value)}
-                    error={errors.deckLengthFt?.message}
-                  />
-                </div>
-
-                <div>
-                  <CustomInput
-                    type='number'
-                    name='deckWidthFt'
-                    label='Deck width (ft)'
-                    value={deckWidthFt}
-                    onChange={(e) => setDeckWidthFt(e.target.value)}
-                    error={errors.deckWidthFt?.message}
-                  />
-                </div>
-
-                <div>
-                  <CustomInput
-                    type='number'
-                    name='maxPayloadKg'
-                    label='Max payload (kg)'
-                    value={maxPayloadKg}
-                    onChange={(e) => setMaxPayloadKg(e.target.value)}
-                    error={errors.maxPayloadKg?.message}
-                  />
-                </div>
-
-                <div>
-                  <CustomSelect
-                    label='Equipment'
-                    name='equipment'
-                    options={EQUIPMENT_OPTIONS}
-                    multiple
-                    value={equipment}
-                    onChange={handleEquipmentChange}
-                    error={errors.equipment?.message}
-                  />
-                </div>
-
-                <div>
-                  <CustomSelect
-                    label='Preferred Cargo Types'
-                    name='preferredCargoTypes'
-                    options={CARGO_TYPES}
-                    multiple
-                    value={preferredCargoTypes}
-                    onChange={handlePreferredCargoChange}
-                    error={errors.preferredCargoTypes?.message}
-                  />
-                </div>
-
-                {deliveryType?.value === 'in_country' && (
-                  <>
-                    <div>
-                      <CustomSelect
-                        label='State'
-                        name='state'
-                        options={states}
-                        value={selectedStateForFlatbed}
-                        onChange={handleStateChange}
-                        error={errors.currentState?.message}
-                      />
-                    </div>
-                    <div>
-                      <CustomSelect
-                        label='City (LGA)'
-                        name='city'
-                        options={lgas}
-                        value={selectedLGA}
-                        onChange={handleLGAChange}
-                        error={errors.currentCity?.message}
-                      />
-                    </div>
-                    <div className='col-span-full'>
-                      <CustomInput
-                        type='text'
-                        name='address'
-                        label='Address / Location'
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        error={errors.address?.message}
-                      />
-                    </div>
-                    <div className='col-span-full'>
-                      <CustomInput
-                        type='text'
-                        name='notes'
-                        label='Notes'
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        error={errors.notes?.message}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {deliveryType?.value === 'up_country' && (
-                  <>
-                    <div>
-                      <CustomSelect
-                        label='Country'
-                        name='country'
-                        options={COUNTRY_OPTIONS}
-                        value={country}
-                        onChange={handleCountryChange}
-                        error={errors.country?.message}
-                      />
-                    </div>
-                    <div className='col-span-full'>
-                      <CustomInput
-                        type='text'
-                        name='address'
-                        label='Address / Location'
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        error={errors.address?.message}
-                      />
-                    </div>
-                    <div className='col-span-full'>
-                      <CustomInput
-                        type='text'
-                        name='notes'
-                        label='Notes'
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        error={errors.notes?.message}
-                      />
-                    </div>
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                <div>
-                  <CustomSelect
-                    label='Current State'
-                    name='state'
-                    options={states}
-                    value={selectedState}
-                    onChange={(v:any)=>{ setSelectedState(v); setSelectedLGA(undefined); }}
-                    error={errors.currentState?.message}
-                  />
-                </div>
-                <div>
-                  <CustomSelect
-                    label='Current City'
-                    name='lga'
-                    options={lgas}
-                    value={selectedLGA}
-                    onChange={(v:any)=> setSelectedLGA(v)}
-                    error={errors.currentCity?.message}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        <div className='flex gap-3 pt-4'>
+        <div className="flex gap-3 pt-4">
           <Button
-            type='button'
-            variant='outline'
+            type="button"
+            variant="outline"
             onClick={onCancel}
             disabled={isLoading}
           >
             Cancel
           </Button>
-          <Button type='submit' disabled={isLoading}>
+          <Button type="submit" disabled={isLoading}>
             {isLoading
               ? "Saving..."
               : initialData

@@ -46,6 +46,17 @@ const DepotHubViewDrawer: React.FC<DepotHubViewDrawerProps> = ({
 
           <div className='space-y-2'>
             <label className='text-sm font-medium text-gray-700'>
+              Type
+            </label>
+            <div>
+              <Badge variant='outline' className={depotHub.type === 'tanker' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                {depotHub.type === 'tanker' ? 'Tanker' : 'Others'}
+              </Badge>
+            </div>
+          </div>
+
+          <div className='space-y-2'>
+            <label className='text-sm font-medium text-gray-700'>
               Total Depots
             </label>
             <div>
