@@ -12,6 +12,36 @@ import {
   calculateFareRequest,
   editDistanceRequest,
 } from "@/services/transport-fare.service";
+import { updateLoadPointRequest, deleteLoadPointRequest } from "@/services/load-point.service";
+  const useUpdateLoadPoint = () => {
+    const { showToast } = useToastConfig();
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: ({ id, data }: { id: string; data: any }) => updateLoadPointRequest(id, data),
+      onSuccess: (res: any) => {
+        showToast(res.message || "Load point updated", "success");
+        queryClient.invalidateQueries({ queryKey: ["TRANSPORT_LOAD_POINTS"] });
+      },
+      onError: (err: any) => {
+        showToast(err?.message || "Error updating load point", "error");
+      },
+    });
+  };
+
+  const useDeleteLoadPoint = () => {
+    const { showToast } = useToastConfig();
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (id: string) => deleteLoadPointRequest(id),
+      onSuccess: (res: any) => {
+        showToast(res.message || "Load point deleted", "success");
+        queryClient.invalidateQueries({ queryKey: ["TRANSPORT_LOAD_POINTS"] });
+      },
+      onError: (err: any) => {
+        showToast(err?.message || "Error deleting load point", "error");
+      },
+    });
+  };
 
 import { CreateTransportConfigDto } from "@/types/transport-fare.types";
 
@@ -137,6 +167,8 @@ const useTransportFareHook = () => {
     useDeleteTransportConfig,
     useFetchLoadPoints,
     useCreateLoadPoint,
+    useUpdateLoadPoint,
+    useDeleteLoadPoint,
     useFetchDistances,
     useBulkUploadDistances,
     useCalculateFare,

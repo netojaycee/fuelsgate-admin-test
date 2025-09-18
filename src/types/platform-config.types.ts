@@ -21,6 +21,8 @@ export interface UpdatePlatformConfigDto {
 export interface ServiceFeeConfig {
     transporterServiceFee: number;
     traderServiceFee: number;
+    traderServiceFeeLoaded: number;
+    transporterServiceFeeLoaded: number;
 }
 
 export interface PlatformConfigQueryParams {

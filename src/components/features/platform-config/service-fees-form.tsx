@@ -19,6 +19,16 @@ const serviceFeesSchema = yup.object({
     .required("Trader service fee is required")
     .min(0, "Fee must be greater than or equal to 0")
     .max(100, "Fee must be less than or equal to 100"),
+  traderServiceFeeLoaded: yup
+    .number()
+    .required("Trader service fee (loaded) is required")
+    .min(0, "Fee must be greater than or equal to 0")
+    .max(100, "Fee must be less than or equal to 100"),
+    transporterServiceFeeLoaded: yup
+    .number()
+    .required("Transporter service fee (loaded) is required")
+    .min(0, "Fee must be greater than or equal to 0")
+    .max(100, "Fee must be less than or equal to 100"),
 });
 
 interface ServiceFeesFormProps {

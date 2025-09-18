@@ -278,11 +278,18 @@ const TransportFareConfigPage = () => {
     useDeleteTransportConfig,
     useFetchLoadPoints,
     useCreateLoadPoint,
+    useUpdateLoadPoint,
+    useDeleteLoadPoint,
     useFetchDistances,
     useBulkUploadDistances,
     useCalculateFare,
     useEditDistance,
   } = useTransportFareHook();
+  // State for editing a load point
+  const [isEditLoadPointOpen, setIsEditLoadPointOpen] = useState(false);
+  const [selectedLoadPoint, setSelectedLoadPoint] = useState<any | null>(null);
+  const updateLoadPointMutation = useUpdateLoadPoint();
+  const deleteLoadPointMutation = useDeleteLoadPoint();
   const editDistanceMutation = useEditDistance();
 
   const { data: configsData, isLoading: loadingConfigs } =
@@ -519,8 +526,39 @@ const TransportFareConfigPage = () => {
             <CustomTable
               columns={[
                 { header: "Name", accessorKey: "name" },
+                { header: "Display Name", accessorKey: "displayName" },
                 { header: "State", accessorKey: "state" },
                 { header: "LGA", accessorKey: "lga" },
+                {
+                  header: "Actions",
+                  accessorKey: "actions",
+                  cell: ({ row }: any) => (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setSelectedLoadPoint(row.original);
+                          setIsEditLoadPointOpen(true);
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={async () => {
+                          if (window.confirm("Are you sure you want to delete this load point?")) {
+                            await deleteLoadPointMutation.mutateAsync(row.original._id);
+                          }
+                        }}
+                        disabled={deleteLoadPointMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ),
+                },
               ]}
               data={loadPointsData?.data || []}
               loading={loadingLoadPoints}
@@ -530,6 +568,37 @@ const TransportFareConfigPage = () => {
               }}
             />
           </div>
+        {/* Edit Load Point Modal */}
+        <Dialog
+          open={isEditLoadPointOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsEditLoadPointOpen(false);
+              setSelectedLoadPoint(null);
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Load Point</DialogTitle>
+            </DialogHeader>
+            {selectedLoadPoint && (
+              <LoadPointForm
+                initialData={selectedLoadPoint}
+                onSubmit={async (data: any) => {
+                  await updateLoadPointMutation.mutateAsync({ id: selectedLoadPoint._id, data });
+                  setIsEditLoadPointOpen(false);
+                  setSelectedLoadPoint(null);
+                }}
+                onCancel={() => {
+                  setIsEditLoadPointOpen(false);
+                  setSelectedLoadPoint(null);
+                }}
+                isLoading={updateLoadPointMutation.isPending}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
         </TabsContent>
 
         <TabsContent value="distances" className="space-y-4">
