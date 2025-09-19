@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import useUserHook from "@/hooks/useUser.hook";
 import { Trash2, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   AlertDialog,
@@ -48,7 +49,8 @@ const Users = () => {
   const [selectedRole, setSelectedRole] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
 
-  const { useFetchUsers, useUpdateUserStatus, useDeleteUser } = useUserHook();
+  const { useFetchUsers, useUpdateUserStatus, useDeleteUser, useToggleUserCanLoad } = useUserHook();
+  const toggleCanLoadMutation = useToggleUserCanLoad();
   const updateStatusMutation = useUpdateUserStatus();
   const deleteUserMutation = useDeleteUser();
 
@@ -195,12 +197,32 @@ const Users = () => {
       ),
     },
     {
+      header: "Can Load",
+      accessorKey: "canLoad",
+      cell: ({ row }: { row: any }) => {
+        const user = row.original;
+        if (user.role === "transporter") {
+          return (
+            <Checkbox
+            className="border border-black"
+              checked={!!user.canLoad}
+              onCheckedChange={async (checked) => {
+                await toggleCanLoadMutation.mutateAsync({ userId: user._id, canLoad: !!checked });
+              }}
+              disabled={toggleCanLoadMutation.isPending}
+            />
+          );
+        }
+        return <span className="text-gray-400">-</span>;
+      },
+    },
+    {
       header: "Actions",
       accessorKey: "actions",
       cell: ({ row }: { row: any }) => {
         const user = row.original;
         return (
-          <div className='flex gap-2'>
+          <div className='flex gap-2 items-center'>
             {activeTab === "new" && user.status === "pending" && (
               <Button
                 size='sm'

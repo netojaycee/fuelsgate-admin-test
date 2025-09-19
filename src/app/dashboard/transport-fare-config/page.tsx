@@ -284,7 +284,9 @@ const TransportFareConfigPage = () => {
     useBulkUploadDistances,
     useCalculateFare,
     useEditDistance,
+    useDeleteDistance,
   } = useTransportFareHook();
+  const deleteDistanceMutation = useDeleteDistance();
   // State for editing a load point
   const [isEditLoadPointOpen, setIsEditLoadPointOpen] = useState(false);
   const [selectedLoadPoint, setSelectedLoadPoint] = useState<any | null>(null);
@@ -633,16 +635,30 @@ const TransportFareConfigPage = () => {
                   header: "Actions",
                   accessorKey: "actions",
                   cell: ({ row }: any) => (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setSelectedDistance(row.original);
-                        setIsEditDistanceOpen(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setSelectedDistance(row.original);
+                          setIsEditDistanceOpen(true);
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={async () => {
+                          if (window.confirm("Are you sure you want to delete this distance record?")) {
+                            await deleteDistanceMutation.mutateAsync(row.original._id);
+                          }
+                        }}
+                        disabled={deleteDistanceMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   ),
                 },
               ]}

@@ -1,3 +1,20 @@
+import { updateUserCanLoadRequest } from "@/services/can-load.service";
+  const useToggleUserCanLoad = () => {
+    const { showToast } = useToastConfig();
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: async ({ userId, canLoad }: { userId: string; canLoad: boolean }) => {
+        return await updateUserCanLoadRequest(userId, canLoad);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["USERS"] });
+        showToast("User canLoad status updated", "success");
+      },
+      onError: (error: any) => {
+        showToast(error?.message || "Failed to update canLoad status", "error");
+      },
+    });
+  };
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchUsersRequest,
@@ -110,6 +127,7 @@ const useUserHook = () => {
     useUpdateUserPassword,
     useDeleteUser,
     useFetchUsersByEmail,
+    useToggleUserCanLoad,
   };
 };
 

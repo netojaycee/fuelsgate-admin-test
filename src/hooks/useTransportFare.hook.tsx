@@ -1,3 +1,18 @@
+import { deleteDistanceRequest } from "@/services/distance.service";
+  const useDeleteDistance = () => {
+    const { showToast } = useToastConfig();
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (id: string) => deleteDistanceRequest(id),
+      onSuccess: (res: any) => {
+        showToast(res.message || "Distance deleted", "success");
+        queryClient.invalidateQueries({ queryKey: ["TRANSPORT_DISTANCES"] });
+      },
+      onError: (err: any) => {
+        showToast(err?.message || "Error deleting distance", "error");
+      },
+    });
+  };
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import useToastConfig from "./useToastConfig.hook";
 import {
@@ -173,6 +188,7 @@ const useTransportFareHook = () => {
     useBulkUploadDistances,
     useCalculateFare,
     useEditDistance,
+    useDeleteDistance,
   };
 };
 
